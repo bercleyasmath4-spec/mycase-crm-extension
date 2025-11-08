@@ -1,5 +1,21 @@
-@app.route('/login')
-def login():
-    # Redirect to the MyCase OAuth provider
-    redirect_uri = url_for('auth', _external=True)  # Set up the redirect URI after authentication
-    return mycase.authorize_redirect(redirect_uri)
+{% extends "base.html" %}
+{% block title %}Admin Login{% endblock %}
+{% block content %}
+<div class="card" style="max-width:520px;margin:0 auto">
+  <h2>Admin Login</h2>
+  <p class="small muted">Sign in to manage clients, settings, and notifications.</p>
+  <form method="post">
+    <div style="margin-top:12px">
+      <label class="small muted">Username</label>
+      <input name="username" required style="width:100%;padding:10px;border-radius:8px;border:none;background:#07101a;color:#e6eef6">
+    </div>
+    <div style="margin-top:12px">
+      <label class="small muted">Password</label>
+      <input type="password" name="password" required style="width:100%;padding:10px;border-radius:8px;border:none;background:#07101a;color:#e6eef6">
+    </div>
+    <div style="margin-top:14px">
+      <button class="btn" type="submit">Sign in</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

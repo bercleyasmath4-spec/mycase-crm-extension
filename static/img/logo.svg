@@ -1,0 +1,28 @@
+<!-- static/img/logo.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="120" viewBox="0 0 400 120">
+  <defs>
+    <linearGradient id="g1" x1="0" x2="1">
+      <stop offset="0" stop-color="#00d4ff"></stop>
+      <stop offset="0.5" stop-color="#6f00ff"></stop>
+      <stop offset="1" stop-color="#ff00c8"></stop>
+    </linearGradient>
+    <filter id="f1" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000" flood-opacity="0.15"></feDropShadow>
+    </filter>
+  </defs>
+
+  <!-- Icon (abstract pulse + scale-ish) -->
+  <g transform="translate(20,10)" filter="url(#f1)">
+    <rect rx="16" ry="16" width="96" height="96" fill="url(#g1)"></rect>
+    <!-- wave / pulse -->
+    <path d="M18 58 L30 40 L42 70 L54 34 L66 58 L78 46" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="translate(8,-4)"></path>
+    <!-- tiny scale line to hint legal -->
+    <circle cx="74" cy="24" r="3" fill="#fff"></circle>
+  </g>
+
+  <!-- Brand text -->
+  <g transform="translate(140,50)">
+    <text x="0" y="-6" font-family="Poppins, Arial, sans-serif" font-weight="700" font-size="28" fill="#111">CasePulse</text>
+    <text x="0" y="22" font-family="Poppins, Arial, sans-serif" font-weight="600" font-size="16" fill="url(#g1)">AI • Case updates • Client alerts</text>
+  </g>
+</svg>

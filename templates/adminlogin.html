@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Login — CasePulse AI</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<main class="center-wrap">
+  <div class="card">
+    <h2>Admin Login</h2>
+    <form method="post">
+      <label>Username</label>
+      <input name="username" required>
+      <label>Password</label>
+      <input name="password" type="password" required>
+      <button class="btn primary" type="submit">Sign in</button>
+    </form>
+  </div>
+</main>
+</body>
+</html>

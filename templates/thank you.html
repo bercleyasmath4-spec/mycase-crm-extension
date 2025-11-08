@@ -1,32 +1,18 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thank You</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thanks — CasePulse AI</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="/">MyCase CRM Extension</a>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" href="/">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/about">About</a>
-                </li>
-                <li class="nav-item active">
-                    <a class="nav-link" href="/thank_you">Thank You</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-
-    <div class="container mt-4">
-        <h1>Thank You!</h1>
-        <p>Your action has been successfully completed. We will notify you of case updates soon.</p>
-    </div>
+<main class="center-wrap">
+  <div class="card">
+    <h2>Thank you</h2>
+    <p>Your request was processed. We will notify the client as appropriate.</p>
+    <a class="btn ghost" href="{{ url_for('index') }}">Return</a>
+  </div>
+</main>
 </body>
 </html>

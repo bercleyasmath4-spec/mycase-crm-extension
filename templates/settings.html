@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>Settings & Integrations</h2>
+  <p class="small muted">Configure integrations (RingCentral, Outlook) via environment variables or your hosting provider (Render).</p>
+
+  <h4>RingCentral</h4>
+  <p class="small muted">To connect RingCentral, create an App in RingCentral Developer Console and paste client_id & secret into Render environment variables.</p>
+  <div class="iconrow">
+    <a class="small muted" href="https://developer.ringcentral.com" target="_blank">RingCentral Dev Console</a>
+  </div>
+
+  <h4 style="margin-top:12px">Outlook (email)</h4>
+  <p class="small muted">Set OUTLOOK_EMAIL and OUTLOOK_PASSWORD (app password) in environment variables.</p>
+
+</div>
+{% endblock %}

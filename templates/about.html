@@ -1,19 +1,26 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About - MyCase CRM Extension</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>About — CasePulse AI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="/">MyCase CRM Extension</a>
-    </nav>
-
-    <div class="container mt-4">
-        <h1>About MyCase CRM Extension</h1>
-        <p>This extension integrates with MyCase Legal software to help analyze case data and notify clients about status updates and balance changes automatically. This is an extension and not an official MyCase product.</p>
-    </div>
+  <header class="topbar">
+    <a href="{{ url_for('index') }}" class="brand">CasePulse AI</a>
+  </header>
+  <main class="content">
+    <section class="container">
+      <h2>About CasePulse AI</h2>
+      <p>CasePulse AI is a lightweight extension that connects to MyCase to read case updates, analyze changes using AI, and notify your clients automatically by SMS and email in multiple languages. This is NOT MyCase — it requires your MyCase account to authorize access.</p>
+      <ul>
+        <li>Daily automated checks (configurable)</li>
+        <li>AI summarization and multilingual message generation</li>
+        <li>Email via SendGrid (recommended) or SMTP, SMS via Twilio or fallback email-to-SMS</li>
+      </ul>
+      <a class="btn primary" href="{{ url_for('index') }}">Back to Login</a>
+    </section>
+  </main>
 </body>
 </html>

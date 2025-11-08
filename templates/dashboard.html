@@ -1,17 +1,74 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM Dashboard</title>
-</head>
-<body>
-    <h1>Welcome to Your CRM Dashboard</h1>
-    <h2>Customer List</h2>
-    <ul>
-        {% for customer in customers %}
-        <li>{{ customer.name }} - {{ customer.email }}</li>
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="grid">
+  <div class="card">
+    <h2>Clients</h2>
+    <p class="small muted">Manage your firm's clients and trigger notifications.</p>
+    <table>
+      <thead><tr><th>Name</th><th>Case #</th><th>Email</th><th>Phone</th><th>Language</th><th></th></tr></thead>
+      <tbody>
+        {% for c in clients %}
+          <tr>
+            <td>{{ c.name }}</td>
+            <td>{{ c.case_number or '-' }}</td>
+            <td>{{ c.email }}</td>
+            <td>{{ c.phone }}</td>
+            <td>{{ c.preferred_language }}</td>
+            <td>
+              <a href="{{ url_for('notify', client_id=c.id) }}" class="small muted">Notify</a> |
+              <a href="{{ url_for('delete_client', client_id=c.id) }}" class="small muted">Delete</a>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="small muted">No clients yet.</td></tr>
         {% endfor %}
+      </tbody>
+    </table>
+
+    <hr style="margin:14px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)">
+    <h3>Add Client</h3>
+    <form method="post" action="{{ url_for('add_client') }}">
+      <input name="name" placeholder="Full name" required style="width:60%;padding:8px;border-radius:8px;border:none;background:#07101a;color:#e6eef6">
+      <input name="case_number" placeholder="Case number" style="width:38%;padding:8px;border-radius:8px;border:none;background:#07101a;color:#e6eef6">
+      <div style="margin-top:8px">
+        <input name="email" placeholder="Email" required style="width:48%;padding:8px;border-radius:8px;border:none;background:#07101a;color:#e6eef6">
+        <input name="phone" placeholder="Phone" required style="width:48%;padding:8px;border-radius:8px;border:none;background:#07101a;color:#e6eef6">
+      </div>
+      <div style="margin-top:10px">
+        <select name="language" style="padding:8px;border-radius:8px;border:none;background:#07101a;color:#e6eef6">
+          <option value="english">English</option>
+          <option value="haitian_creole">Haitian Creole</option>
+          <option value="french">French</option>
+          <option value="spanish">Spanish</option>
+          <option value="wolof">Wolof</option>
+        </select>
+        <button class="btn" style="margin-left:10px">Add</button>
+      </div>
+    </form>
+
+  </div>
+
+  <aside class="card">
+    <h3>Connections</h3>
+    <div class="small muted">Tokens / connected services</div>
+    <ul style="padding-left:0;">
+      {% for t in tokens %}
+        <li class="small muted">{{ t.provider }} — saved at {{ t.created_at }}</li>
+      {% else %}
+        <li class="small muted">No tokens saved</li>
+      {% endfor %}
     </ul>
-</body>
-</html>
+
+    <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)">
+
+    <h4>Quick actions</h4>
+    <div style="margin-top:8px">
+      <a class="btn" href="{{ url_for('mycase_login') }}">Connect MyCase</a>
+    </div>
+    <div style="margin-top:8px">
+      <a class="btn" href="{{ url_for('settings') }}">Open Settings</a>
+    </div>
+  </aside>
+</div>
+{% endblock %}
