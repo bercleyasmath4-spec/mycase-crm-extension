@@ -1,74 +1,119 @@
-{% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
-{% block content %}
-<div class="grid">
-  <div class="card">
-    <h2>Clients</h2>
-    <p class="small muted">Manage your firm's clients and trigger notifications.</p>
-    <table>
-      <thead><tr><th>Name</th><th>Case #</th><th>Email</th><th>Phone</th><th>Language</th><th></th></tr></thead>
-      <tbody>
-        {% for c in clients %}
-          <tr>
-            <td>{{ c.name }}</td>
-            <td>{{ c.case_number or '-' }}</td>
-            <td>{{ c.email }}</td>
-            <td>{{ c.phone }}</td>
-            <td>{{ c.preferred_language }}</td>
-            <td>
-              <a href="{{ url_for('notify', client_id=c.id) }}" class="small muted">Notify</a> |
-              <a href="{{ url_for('delete_client', client_id=c.id) }}" class="small muted">Delete</a>
-            </td>
-          </tr>
-        {% else %}
-          <tr><td colspan="6" class="small muted">No clients yet.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CasePulse AI Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    body {
+      background-color: #0d1117;
+      color: #f0f6fc;
+      font-family: "Poppins", sans-serif;
+    }
+    .navbar {
+      background-color: #161b22;
+      padding: 1rem;
+    }
+    .navbar-brand {
+      color: #58a6ff;
+      font-weight: bold;
+    }
+    .card {
+      background-color: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(88, 166, 255, 0.15);
+      padding: 1.5rem;
+      transition: transform 0.2s ease;
+    }
+    .card:hover {
+      transform: scale(1.02);
+    }
+    .btn-primary {
+      background-color: #238636;
+      border: none;
+    }
+    .btn-primary:hover {
+      background-color: #2ea043;
+    }
+    .spinner-border {
+      width: 2rem;
+      height: 2rem;
+      color: #58a6ff;
+    }
+    .ai-summary-box {
+      background: #21262d;
+      border: 1px solid #30363d;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+      color: #c9d1d9;
+    }
+  </style>
+</head>
 
-    <hr style="margin:14px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)">
-    <h3>Add Client</h3>
-    <form method="post" action="{{ url_for('add_client') }}">
-      <input name="name" placeholder="Full name" required style="width:60%;padding:8px;border-radius:8px;border:none;background:#07101a;color:#e6eef6">
-      <input name="case_number" placeholder="Case number" style="width:38%;padding:8px;border-radius:8px;border:none;background:#07101a;color:#e6eef6">
-      <div style="margin-top:8px">
-        <input name="email" placeholder="Email" required style="width:48%;padding:8px;border-radius:8px;border:none;background:#07101a;color:#e6eef6">
-        <input name="phone" placeholder="Phone" required style="width:48%;padding:8px;border-radius:8px;border:none;background:#07101a;color:#e6eef6">
-      </div>
-      <div style="margin-top:10px">
-        <select name="language" style="padding:8px;border-radius:8px;border:none;background:#07101a;color:#e6eef6">
-          <option value="english">English</option>
-          <option value="haitian_creole">Haitian Creole</option>
-          <option value="french">French</option>
-          <option value="spanish">Spanish</option>
-          <option value="wolof">Wolof</option>
-        </select>
-        <button class="btn" style="margin-left:10px">Add</button>
-      </div>
-    </form>
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-expand-lg">
+    <a class="navbar-brand" href="#">💬 CasePulse AI</a>
+    <div class="ms-auto">
+      <a href="/about" class="btn btn-outline-light btn-sm me-2">About</a>
+      <a href="/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+    </div>
+  </nav>
 
+  <!-- DASHBOARD -->
+  <div class="container mt-5">
+    <h2 class="text-center mb-4">AI Case Analysis Dashboard</h2>
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card">
+          <h5 class="mb-3">Analyze Case Update</h5>
+          <textarea id="caseNotes" class="form-control mb-3" rows="4" placeholder="Paste client update or case note here..."></textarea>
+          <div class="text-center">
+            <button id="analyzeBtn" class="btn btn-primary">Analyze & Notify</button>
+          </div>
+          <div class="text-center mt-3" id="loading" style="display:none;">
+            <div class="spinner-border" role="status"></div>
+            <p class="mt-2">AI is analyzing the update...</p>
+          </div>
+          <div id="resultBox" class="ai-summary-box" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <aside class="card">
-    <h3>Connections</h3>
-    <div class="small muted">Tokens / connected services</div>
-    <ul style="padding-left:0;">
-      {% for t in tokens %}
-        <li class="small muted">{{ t.provider }} — saved at {{ t.created_at }}</li>
-      {% else %}
-        <li class="small muted">No tokens saved</li>
-      {% endfor %}
-    </ul>
+  <script>
+    document.getElementById("analyzeBtn").addEventListener("click", async () => {
+      const caseNotes = document.getElementById("caseNotes").value.trim();
+      if (!caseNotes) {
+        alert("Please enter case notes before analyzing.");
+        return;
+      }
 
-    <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)">
+      // Show loading spinner
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("resultBox").style.display = "none";
 
-    <h4>Quick actions</h4>
-    <div style="margin-top:8px">
-      <a class="btn" href="{{ url_for('mycase_login') }}">Connect MyCase</a>
-    </div>
-    <div style="margin-top:8px">
-      <a class="btn" href="{{ url_for('settings') }}">Open Settings</a>
-    </div>
-  </aside>
-</div>
-{% endblock %}
+      try {
+        const res = await axios.post("/analyze_case_updates", { case_notes: caseNotes });
+        const aiSummary = res.data.ai_summary;
+
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("resultBox").style.display = "block";
+        document.getElementById("resultBox").innerHTML = `
+          <h6>🧠 AI Summary</h6>
+          <p>${aiSummary}</p>
+          <p><small>✅ Notifications sent via Outlook + RingCentral</small></p>
+        `;
+      } catch (error) {
+        console.error(error);
+        document.getElementById("loading").style.display = "none";
+        alert("Error analyzing case update.");
+      }
+    });
+  </script>
+</body>
+</html>
