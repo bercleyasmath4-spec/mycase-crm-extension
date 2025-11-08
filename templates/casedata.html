@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Data</title>
+</head>
+<body>
+    <h1>Your Cases</h1>
+    <ul>
+        {% for case in cases %}
+            <li>Case Name: {{ case.name }} - Status: {{ case.status }} - Balance: ${{ case.balance }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Summary of Case Data:</h2>
+    <p>{{ summary }}</p>
+
+    <a href="{{ url_for('home') }}">Go back to Home</a>
+</body>
+</html>

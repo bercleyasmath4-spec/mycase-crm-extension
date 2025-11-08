@@ -1,0 +1,5 @@
+@app.route('/login')
+def login():
+    # Redirect to the MyCase OAuth provider
+    redirect_uri = url_for('auth', _external=True)  # Set up the redirect URI after authentication
+    return mycase.authorize_redirect(redirect_uri)

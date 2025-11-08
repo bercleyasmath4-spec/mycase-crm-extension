@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Dashboard</title>
+</head>
+<body>
+    <h1>Welcome to Your CRM Dashboard</h1>
+    <h2>Customer List</h2>
+    <ul>
+        {% for customer in customers %}
+        <li>{{ customer.name }} - {{ customer.email }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
