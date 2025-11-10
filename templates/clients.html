@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Clients | CasePulse AI{% endblock %}
+
+{% block content %}
+<div class="p-8 bg-gray-900 text-gray-100 min-h-screen">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-teal-400">Client Directory</h1>
+    <button id="addClientBtn" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg font-semibold">
+      + Add Client
+    </button>
+  </div>
+
+  <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+    <table class="min-w-full border border-gray-700 rounded-lg overflow-hidden">
+      <thead class="bg-gray-700">
+        <tr>
+          <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Name</th>
+          <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Email</th>
+          <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Phone</th>
+          <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Language</th>
+          <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Status</th>
+          <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="clientTable">
+        {% for c in clients %}
+        <tr class="border-b border-gray-700 hover:bg-gray-750">
+          <td class="px-4 py-2">{{ c.name }}</td>
+          <td class="px-4 py-2">{{ c.email }}</td>
+          <td class="px-4 py-2">{{ c.phone }}</td>
+          <td class="px-4 py-2 capitalize">{{ c.language }}</td>
+          <td class="px-4 py-2">{{ c.status }}</td>
+          <td class="px-4 py-2 flex space-x-3">
+            <button class="text-blue-400 hover:text-blue-300" onclick="editClient('{{ c.id }}')">Edit</button>
+            <button class="text-red-400 hover:text-red-300" onclick="deleteClient('{{ c.id }}')">Delete</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div id="clientModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+    <div class="bg-gray-800 p-8 rounded-lg w-96">
+      <h2 id="modalTitle" class="text-2xl font-bold mb-4 text-teal-400">Add Client</h2>
+      <form id="clientForm">
+        <input type="hidden" id="clientId" />
+        <div class="mb-3">
+          <label class="block mb-1 text-sm text-gray-300">Full Name</label>
+          <input id="clientName" type="text" class="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-gray-100 focus:ring-2 focus:ring-teal-400" required />
+        </div>
+        <div class="mb-3">
+          <label class="block mb-1 text-sm text-gray-300">Email</label>
+          <input id="clientEmail" type="email" class="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-gray-100" />
+        </div>
+        <div class="mb-3">
+          <label class="block mb-1 text-sm text-gray-300">Phone</label>
+          <input id="clientPhone" type="text" class="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-gray-100" />
+        </div>
+        <div class="mb-3">
+          <label class="block mb-1 text-sm text-gray-300">Language</label>
+          <select id="clientLanguage" class="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-gray-100">
+            <option value="english">English</option>
+            <option value="french">French</option>
+            <option value="spanish">Spanish</option>
+            <option value="creole">Haitian Creole</option>
+            <option value="wolof">Wolof</option>
+          </select>
+        </div>
+        <div class="flex justify-end space-x-2 mt-4">
+          <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const modal = document.getElementById("clientModal");
+  const form = document.getElementById("clientForm");
+
+  document.getElementById("addClientBtn").addEventListener("click", () => {
+    document.getElementById("modalTitle").innerText = "Add Client";
+    form.reset();
+    document.getElementById("clientId").value = "";
+    modal.classList.remove("hidden");
+  });
+
+  function closeModal() {
+    modal.classList.add("hidden");
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const client = {
+      id: document.getElementById("clientId").value,
+      name: document.getElementById("clientName").value,
+      email: document.getElementById("clientEmail").value,
+      phone: document.getElementById("clientPhone").value,
+      language: document.getElementById("clientLanguage").value
+    };
+
+    const res = await fetch("/api/client/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(client)
+    });
+    if (res.ok) location.reload();
+  });
+
+  async function editClient(id) {
+    const res = await fetch(`/api/client/${id}`);
+    const data = await res.json();
+    document.getElementById("clientId").value = data.id;
+    document.getElementById("clientName").value = data.name;
+    document.getElementById("clientEmail").value = data.email;
+    document.getElementById("clientPhone").value = data.phone;
+    document.getElementById("clientLanguage").value = data.language;
+    document.getElementById("modalTitle").innerText = "Edit Client";
+    modal.classList.remove("hidden");
+  }
+
+  async function deleteClient(id) {
+    if (confirm("Delete this client?")) {
+      const res = await fetch(`/api/client/delete/${id}`, { method: "DELETE" });
+      if (res.ok) location.reload();
+    }
+  }
+</script>
+{% endblock %}

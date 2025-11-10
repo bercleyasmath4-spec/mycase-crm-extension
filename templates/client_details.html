@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5" style="color: #e6edf3;">
+  <div class="card shadow-lg p-4 mb-4" style="background-color: #161b22; border: 1px solid #30363d;">
+    <h3 class="fw-bold mb-3">Client Details</h3>
+
+    <div class="mb-3">
+      <h5 class="text-info">{{ client.name }}</h5>
+      <p><strong>Email:</strong> {{ client.email or 'N/A' }}</p>
+      <p><strong>Phone:</strong> {{ client.phone or 'N/A' }}</p>
+      <p><strong>Added On:</strong> {{ client.created_at.strftime('%B %d, %Y') }}</p>
+    </div>
+
+    <a href="{{ url_for('dash_bp.dashboard') }}" class="btn btn-secondary mb-3">← Back to Dashboard</a>
+
+    <hr style="border-color: #30363d;">
+
+    <!-- Case Updates Section -->
+    <h4 class="text-warning mt-4">Case Updates</h4>
+    {% if client.case_updates %}
+      <ul class="list-group">
+        {% for update in client.case_updates %}
+          <li class="list-group-item" style="background-color: #0d1117; color: #c9d1d9;">
+            <strong>{{ update.created_at.strftime('%b %d, %Y %I:%M %p') }}</strong><br>
+            {{ update.summary or 'No summary available.' }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">No case updates for this client yet.</p>
+    {% endif %}
+
+    <hr style="border-color: #30363d;">
+
+    <!-- Messages Section -->
+    <h4 class="text-warning mt-4">Messages</h4>
+    {% if client.messages %}
+      <ul class="list-group">
+        {% for message in client.messages %}
+          <li class="list-group-item" style="background-color: #0d1117; color: #c9d1d9;">
+            <strong>{{ message.created_at.strftime('%b %d, %Y %I:%M %p') }}</strong><br>
+            {{ message.message }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">No messages recorded for this client.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

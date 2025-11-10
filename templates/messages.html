@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="text-white">💬 Messages</h2>
+    <div>
+      <input id="searchInput" type="search" class="form-control d-inline-block" style="width:320px"
+             placeholder="Search messages or client..." />
+      <button class="btn btn-custom ms-2" id="refreshBtn">Refresh</button>
+      <button class="btn btn-success ms-2" data-bs-toggle="modal" data-bs-target="#composeModal">Compose</button>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left: message list -->
+    <div class="col-lg-4">
+      <div class="card p-3" style="height:70vh; overflow:auto;">
+        <h6 class="text-muted">Recent</h6>
+        <ul id="messageList" class="list-group list-group-flush mt-2">
+          <!-- JS will populate -->
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right: preview / details -->
+    <div class="col-lg-8">
+      <div class="card p-4" id="messagePreviewCard">
+        <h5 id="previewTitle">Select a message to preview</h5>
+        <p class="text-muted" id="previewMeta"></p>
+        <div id="previewBody" class="mt-3 text-light">No message selected.</div>
+
+        <div class="mt-4 d-flex gap-2">
+          <button id="replyBtn" class="btn btn-outline-light">Reply</button>
+          <button id="resendBtn" class="btn btn-custom">Resend</button>
+          <button id="deleteBtn" class="btn btn-danger">Delete</button>
+        </div>
+
+        <hr class="my-4" />
+        <div>
+          <h6 class="text-secondary mb-2">AI Draft (quick generate)</h6>
+          <div class="d-flex gap-2">
+            <select id="aiLanguage" class="form-select" style="width:200px">
+              <option value="English">English</option>
+              <option value="Spanish">Spanish</option>
+              <option value="French">French</option>
+              <option value="Haitian Creole">Haitian Creole</option>
+              <option value="Wolof">Wolof</option>
+            </select>
+            <button id="generateBtn" class="btn btn-primary">Generate AI Draft</button>
+          </div>
+          <textarea id="aiDraft" class="form-control mt-3" rows="4" placeholder="AI draft will appear here..."></textarea>
+
+          <div class="form-check form-switch mt-3">
+            <input class="form-check-input" type="checkbox" id="sendEmailToggle" checked>
+            <label class="form-check-label text-muted" for="sendEmailToggle">Send Email (Outlook)</label>
+          </div>
+          <div class="form-check form-switch mt-1">
+            <input class="form-check-input" type="checkbox" id="sendSmsToggle" checked>
+            <label class="form-check-label text-muted" for="sendSmsToggle">Send SMS (RingCentral)</label>
+          </div>
+
+          <div class="mt-3">
+            <button id="sendDraftBtn" class="btn btn-success">Send Draft</button>
+            <span id="sendStatus" class="ms-3 text-muted"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Compose Modal -->
+<div class="modal fade" id="composeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content" style="background-color:#1c1f26; color:#fff;">
+      <div class="modal-header border-0">
+        <h5 class="modal-title">Compose Message</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="composeForm">
+          <div class="row g-2">
+            <div class="col-md-6">
+              <label class="form-label text-muted">Client name</label>
+              <input id="composeName" class="form-control bg-dark text-light" placeholder="Client Full Name" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted">Client email</label>
+              <input id="composeEmail" type="email" class="form-control bg-dark text-light" placeholder="email@example.com" />
+            </div>
+            <div class="col-md-6 mt-2">
+              <label class="form-label text-muted">Phone</label>
+              <input id="composePhone" class="form-control bg-dark text-light" placeholder="+1555..." />
+            </div>
+            <div class="col-md-6 mt-2">
+              <label class="form-label text-muted">Language</label>
+              <select id="composeLanguage" class="form-select bg-dark text-light">
+                <option>English</option>
+                <option>Spanish</option>
+                <option>French</option>
+                <option>Haitian Creole</option>
+                <option>Wolof</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <label class="form-label text-muted">Message / Notes</label>
+            <textarea id="composeBody" class="form-control bg-dark text-light" rows="4" placeholder="Write your message or paste case notes..."></textarea>
+          </div>
+
+          <div class="mt-3 d-flex gap-2">
+            <button id="composeAI" type="button" class="btn btn-outline-primary">Generate with AI</button>
+            <button id="composeSend" type="submit" class="btn btn-success">Send</button>
+            <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+          </div>
+
+          <div id="composeStatus" class="mt-2 text-muted"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ----- Helpers -----
+  async function fetchMessages() {
+    try {
+      const res = await fetch('/api/messages');
+      const data = await res.json();
+      const list = document.getElementById('messageList');
+      list.innerHTML = '';
+      data.forEach(m => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item bg-transparent border-secondary text-light d-flex justify-content-between align-items-start';
+        li.style.cursor = 'pointer';
+        li.innerHTML = `
+          <div>
+            <strong>${m.client_name || 'Unknown'}</strong><br/>
+            <small class="text-muted">${m.channel} • ${new Date(m.created_at).toLocaleString()}</small>
+          </div>
+          <div><span class="badge bg-secondary">${m.language}</span></div>
+        `;
+        li.addEventListener('click', () => showPreview(m));
+        list.appendChild(li);
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Failed to load messages.');
+    }
+  }
+
+  function showPreview(m) {
+    document.getElementById('previewTitle').innerText = `${m.client_name} — ${m.channel.toUpperCase()}`;
+    document.getElementById('previewMeta').innerText = `Sent: ${new Date(m.created_at).toLocaleString()} • Lang: ${m.language}`;
+    document.getElementById('previewBody').innerText = m.body;
+    // store preview id for actions
+    window.currentPreview = m;
+  }
+
+  // ----- On load -----
+  document.addEventListener('DOMContentLoaded', () => {
+    fetchMessages();
+  });
+
+  // Refresh button
+  document.getElementById('refreshBtn').addEventListener('click', fetchMessages);
+
+  // Compose form
+  document.getElementById('composeForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      client_name: document.getElementById('composeName').value,
+      email: document.getElementById('composeEmail').value,
+      phone: document.getElementById('composePhone').value,
+      language: document.getElementById('composeLanguage').value,
+      body: document.getElementById('composeBody').value,
+      send_email: true,
+      send_sms: true
+    };
+    document.getElementById('composeStatus').innerText = 'Sending...';
+    const res = await fetch('/api/send_message', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    document.getElementById('composeStatus').innerText = data.status ? 'Sent ✅' : 'Error';
+    fetchMessages();
+    // auto-close modal after short delay
+    setTimeout(() => {
+      const modalEl = document.getElementById('composeModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+    }, 800);
+  });
+
+  // Compose AI generate
+  document.getElementById('composeAI').addEventListener('click', async () => {
+    const notes = document.getElementById('composeBody').value || 'Please draft a client update.';
+    document.getElementById('composeStatus').innerText = 'Generating AI draft...';
+    try {
+      const res = await fetch('/api/generate_message', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ name: document.getElementById('composeName').value || 'Client', language: document.getElementById('composeLanguage').value, status: notes })
+      });
+      const body = await res.json();
+      if (body.message) {
+        document.getElementById('composeBody').value = body.message;
+        document.getElementById('composeStatus').innerText = 'AI draft inserted.';
+      } else {
+        document.getElementById('composeStatus').innerText = 'AI error.';
+      }
+    } catch (err) {
+      console.error(err);
+      document.getElementById('composeStatus').innerText = 'AI service failed.';
+    }
+  });
+
+  // Generate AI draft in preview panel
+  document.getElementById('generateBtn').addEventListener('click', async () => {
+    const clientName = (window.currentPreview && window.currentPreview.client_name) || 'Client';
+    const lang = document.getElementById('aiLanguage').value;
+    document.getElementById('aiDraft').value = 'Generating…';
+    try {
+      const res = await fetch('/api/generate_message', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ name: clientName, language: lang, status: 'Update' })
+      });
+      const body = await res.json();
+      document.getElementById('aiDraft').value = body.message || 'AI error';
+    } catch (err) {
+      console.error(err);
+      document.getElementById('aiDraft').value = 'Failed to generate';
+    }
+  });
+
+  // Send the AI draft
+  document.getElementById('sendDraftBtn').addEventListener('click', async () => {
+    if (!window.currentPreview) { alert('Select a message first'); return; }
+    const message = document.getElementById('aiDraft').value;
+    const payload = {
+      client_id: window.currentPreview.client_id || null,
+      client_name: window.currentPreview.client_name,
+      email: window.currentPreview.email || '',
+      phone: window.currentPreview.phone || '',
+      language: window.currentPreview.language || 'English',
+      body: message,
+      send_email: document.getElementById('sendEmailToggle').checked,
+      send_sms: document.getElementById('sendSmsToggle').checked
+    };
+    document.getElementById('sendStatus').innerText = 'Sending…';
+    const res = await fetch('/api/send_message', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    document.getElementById('sendStatus').innerText = data.status ? 'Sent ✅' : 'Error';
+    setTimeout(() => { document.getElementById('sendStatus').innerText = ''; fetchMessages(); }, 900);
+  });
+
+  // delete/resend/reply buttons (basic local feedback)
+  document.getElementById('deleteBtn').addEventListener('click', async () => {
+    if (!window.currentPreview) return alert('Select a message');
+    if (!confirm('Delete this log?')) return;
+    // call API to delete if you implement it (e.g. DELETE /api/messages/<id>)
+    alert('Deleted (simulated)');
+    fetchMessages();
+  });
+
+  document.getElementById('resendBtn').addEventListener('click', async () => {
+    if (!window.currentPreview) return alert('Select a message');
+    const payload = { client_id: window.currentPreview.client_id, message: window.currentPreview.body };
+    await fetch('/api/send_notification', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    alert('Resent (simulated)');
+  });
+
+</script>
+{% endblock %}

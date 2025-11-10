@@ -1,18 +1,137 @@
 {% extends "base.html" %}
-{% block title %}Settings{% endblock %}
 {% block content %}
-<div class="card">
-  <h2>Settings & Integrations</h2>
-  <p class="small muted">Configure integrations (RingCentral, Outlook) via environment variables or your hosting provider (Render).</p>
-
-  <h4>RingCentral</h4>
-  <p class="small muted">To connect RingCentral, create an App in RingCentral Developer Console and paste client_id & secret into Render environment variables.</p>
-  <div class="iconrow">
-    <a class="small muted" href="https://developer.ringcentral.com" target="_blank">RingCentral Dev Console</a>
+<div class="container mt-5">
+  <div class="d-flex justify-content-between mb-3 align-items-center">
+    <h2 class="text-white">⚙️ Settings</h2>
+    <button id="testAllBtn" class="btn btn-outline-light">Run Test Sends</button>
   </div>
 
-  <h4 style="margin-top:12px">Outlook (email)</h4>
-  <p class="small muted">Set OUTLOOK_EMAIL and OUTLOOK_PASSWORD (app password) in environment variables.</p>
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card p-4">
+        <h5 class="mb-3">Primary Email (Outlook / Microsoft)</h5>
+        <div class="mb-2"><label class="form-label text-muted">Outlook Email</label>
+          <input id="outlookEmail" class="form-control bg-dark text-light" placeholder="your@company.com"></div>
+        <div class="mb-2"><label class="form-label text-muted">Outlook Password / App Pass</label>
+          <input id="outlookPassword" type="password" class="form-control bg-dark text-light" placeholder="********"></div>
+        <div><button id="saveEmailBtn" class="btn btn-custom">Save Email Settings</button></div>
+        <small class="text-muted mt-2 d-block">We never store plaintext keys in the UI — they are saved to the server environment (Render / .env).</small>
+      </div>
 
+      <div class="card p-4 mt-4">
+        <h5 class="mb-3">RingCentral</h5>
+        <div class="mb-2"><label class="form-label text-muted">Client ID</label>
+          <input id="rcClient" class="form-control bg-dark text-light"></div>
+        <div class="mb-2"><label class="form-label text-muted">Client Secret</label>
+          <input id="rcSecret" class="form-control bg-dark text-light"></div>
+        <div class="mb-2"><label class="form-label text-muted">Phone number</label>
+          <input id="rcPhone" class="form-control bg-dark text-light"></div>
+        <div><button id="saveRCBtn" class="btn btn-custom">Save RingCentral</button></div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card p-4">
+        <h5 class="mb-3">AI / OpenAI</h5>
+        <div class="mb-2"><label class="form-label text-muted">OpenAI API Key</label>
+          <input id="openaiKey" class="form-control bg-dark text-light" placeholder="sk-..."></div>
+        <div><button id="saveAIKey" class="btn btn-custom">Save OpenAI Key</button></div>
+
+        <hr class="my-3" />
+
+        <h6>Preferences</h6>
+        <div class="form-check">
+          <input id="autoNotify" class="form-check-input" type="checkbox" checked>
+          <label class="form-check-label text-muted">Auto-notify clients on AI-detected updates</label>
+        </div>
+        <div class="form-check mt-2">
+          <input id="storeLogs" class="form-check-input" type="checkbox" checked>
+          <label class="form-check-label text-muted">Store message logs</label>
+        </div>
+
+        <div class="mt-3">
+          <button id="savePrefs" class="btn btn-outline-light">Save Preferences</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="settingsMsg" class="mt-3 text-muted"></div>
 </div>
+
+<script>
+  // Load existing values from /api/settings (if you implement)
+  async function loadSettings() {
+    try {
+      const res = await fetch('/api/settings');
+      if (!res.ok) return;
+      const s = await res.json();
+      document.getElementById('outlookEmail').value = s.OUTLOOK_EMAIL || '';
+      document.getElementById('rcClient').value = s.RINGCENTRAL_CLIENT_ID || '';
+      document.getElementById('rcSecret').value = s.RINGCENTRAL_CLIENT_SECRET || '';
+      document.getElementById('rcPhone').value = s.RINGCENTRAL_PHONE_NUMBER || '';
+      document.getElementById('openaiKey').value = s.OPENAI_API_KEY ? '******** (set)' : '';
+      document.getElementById('autoNotify').checked = s.AUTO_NOTIFY;
+      document.getElementById('storeLogs').checked = s.STORE_LOGS;
+    } catch (err) {
+      console.log('No settings endpoint or error', err);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadSettings);
+
+  async function postSettings(payload) {
+    const res = await fetch('/api/settings', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    return res.json();
+  }
+
+  document.getElementById('saveEmailBtn').addEventListener('click', async () => {
+    const payload = {
+      OUTLOOK_EMAIL: document.getElementById('outlookEmail').value,
+      OUTLOOK_PASSWORD: document.getElementById('outlookPassword').value
+    };
+    document.getElementById('settingsMsg').innerText = 'Saving email...';
+    await postSettings(payload);
+    document.getElementById('settingsMsg').innerText = 'Saved email settings.';
+  });
+
+  document.getElementById('saveRCBtn').addEventListener('click', async () => {
+    const payload = {
+      RINGCENTRAL_CLIENT_ID: document.getElementById('rcClient').value,
+      RINGCENTRAL_CLIENT_SECRET: document.getElementById('rcSecret').value,
+      RINGCENTRAL_PHONE_NUMBER: document.getElementById('rcPhone').value
+    };
+    document.getElementById('settingsMsg').innerText = 'Saving RingCentral...';
+    await postSettings(payload);
+    document.getElementById('settingsMsg').innerText = 'Saved RingCentral settings.';
+  });
+
+  document.getElementById('saveAIKey').addEventListener('click', async () => {
+    const payload = { OPENAI_API_KEY: document.getElementById('openaiKey').value };
+    document.getElementById('settingsMsg').innerText = 'Saving OpenAI key...';
+    await postSettings(payload);
+    document.getElementById('settingsMsg').innerText = 'Saved OpenAI key.';
+  });
+
+  document.getElementById('savePrefs').addEventListener('click', async () => {
+    const payload = { AUTO_NOTIFY: document.getElementById('autoNotify').checked, STORE_LOGS: document.getElementById('storeLogs').checked };
+    document.getElementById('settingsMsg').innerText = 'Saving preferences...';
+    await postSettings(payload);
+    document.getElementById('settingsMsg').innerText = 'Preferences saved.';
+  });
+
+  document.getElementById('testAllBtn').addEventListener('click', async () => {
+    document.getElementById('settingsMsg').innerText = 'Running test sends...';
+    try {
+      const res = await fetch('/api/test_sends', { method: 'POST' });
+      const j = await res.json();
+      document.getElementById('settingsMsg').innerText = 'Test sends complete: ' + (j.message || 'OK');
+    } catch (err) {
+      document.getElementById('settingsMsg').innerText = 'Test failed.';
+    }
+  });
+
+</script>
 {% endblock %}

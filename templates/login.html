@@ -1,21 +1,26 @@
 {% extends "base.html" %}
-{% block title %}Admin Login{% endblock %}
 {% block content %}
-<div class="card" style="max-width:520px;margin:0 auto">
-  <h2>Admin Login</h2>
-  <p class="small muted">Sign in to manage clients, settings, and notifications.</p>
-  <form method="post">
-    <div style="margin-top:12px">
-      <label class="small muted">Username</label>
-      <input name="username" required style="width:100%;padding:10px;border-radius:8px;border:none;background:#07101a;color:#e6eef6">
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+      <div class="card p-4 shadow-lg" style="background-color: #161b22; color: white;">
+        <h3 class="text-center mb-3">Sign In to CasePulse AI</h3>
+
+        <form method="POST" action="{{ url_for('auth.login') }}">
+          <div class="mb-3">
+            <input type="email" name="email" class="form-control" placeholder="Email address" required>
+          </div>
+          <div class="mb-3">
+            <input type="password" name="password" class="form-control" placeholder="Password" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Login</button>
+        </form>
+
+        <div class="text-center mt-3">
+          <p class="text-muted">Use your admin credentials to access CasePulse AI.</p>
+        </div>
+      </div>
     </div>
-    <div style="margin-top:12px">
-      <label class="small muted">Password</label>
-      <input type="password" name="password" required style="width:100%;padding:10px;border-radius:8px;border:none;background:#07101a;color:#e6eef6">
-    </div>
-    <div style="margin-top:14px">
-      <button class="btn" type="submit">Sign in</button>
-    </div>
-  </form>
+  </div>
 </div>
 {% endblock %}

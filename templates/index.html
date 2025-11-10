@@ -1,24 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact Us</title>
-</head>
-<body>
-    <h1>Welcome to MyCase CRM Extension</h1>
-    <h2>Contact Us</h2>
-    <form action="/contact" method="POST">
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name" required><br><br>
-
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required><br><br>
-
-        <label for="message">Message:</label><br>
-        <textarea id="message" name="message" rows="4" required></textarea><br><br>
-
-        <button type="submit">Submit</button>
-    </form>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="text-center mt-5">
+  <h1 class="fw-bold mb-4">Welcome to CasePulse AI</h1>
+  <p class="lead mb-4">
+    Your intelligent assistant for managing client cases, automating updates, and improving communication — seamlessly integrated with MyCase.
+  </p>
+  <div class="mt-4">
+    <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg me-3">Login</a>
+    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg">Login with MyCase</a>
+  </div>
+</div>
+{% endblock %}
