@@ -116,3 +116,5 @@ if __name__ == "__main__":
         ensure_admin_exists()
         logger.info("✅ Database initialized and checked for admin user.")
     app.run(debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000, debug=True)
