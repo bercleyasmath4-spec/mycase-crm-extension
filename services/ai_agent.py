@@ -1,72 +1,104 @@
+import os
 import logging
 from openai import OpenAI
 
-# Initialize logging
+# Configure logger for this service
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
-# ✅ Initialize OpenAI client once
+# Ensure logs also show up on Render/console
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
+
+# Initialize OpenAI client
 try:
-    client = OpenAI()
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+
+    if not openai_api_key:
+        raise ValueError("Missing OPENAI_API_KEY environment variable")
+
+    # ✅ New SDK initialization — no 'proxies' argument needed
+    client = OpenAI(api_key=openai_api_key)
+
     logger.info("✅ AI Agent: OpenAI client initialized successfully.")
+
 except Exception as e:
     logger.error(f"❌ Failed to initialize OpenAI client: {e}")
     client = None
 
 
-# ================================
-# Analyze a single client's case
-# ================================
-def analyze_client_cases(client_obj):
+def analyze_case_text(case_text: str) -> str:
     """
-    Uses OpenAI to generate an AI summary of a client's case history.
+    Analyze a client case description and generate a professional summary.
+    Uses GPT-4 or latest available model.
     """
     if not client:
-        logger.error("❌ OpenAI client not initialized.")
-        return "AI analysis unavailable at this time."
+        logger.error("❌ OpenAI client not initialized — cannot analyze case text.")
+        return "AI service unavailable."
 
     try:
-        # Build prompt based on client's details
-        prompt = f"""
-        You are an AI legal assistant. Summarize this client's case data clearly and professionally.
-
-        Client Name: {client_obj.name}
-        Email: {client_obj.email}
-        Phone: {client_obj.phone}
-        Case updates:
-        {', '.join([cu.summary for cu in client_obj.case_updates]) if client_obj.case_updates else "No updates yet."}
-
-        Provide a short analysis (1–2 sentences) on the case status or next steps.
-        """
-
-        # Use OpenAI's API
-        response = client.responses.create(
-            model="gpt-4.1-mini",
-            input=prompt,
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are an AI assistant for a law firm CRM system. "
+                        "Summarize case updates, identify important legal details, "
+                        "and respond in clear, professional language."
+                    ),
+                },
+                {"role": "user", "content": case_text},
+            ],
+            temperature=0.5,
         )
 
-        summary = response.output[0].content[0].text.strip()
-        logger.info(f"🤖 AI Analysis complete for {client_obj.name}")
+        summary = response.choices[0].message.content.strip()
+        logger.info("✅ Successfully analyzed case text.")
         return summary
 
     except Exception as e:
-        logger.error(f"❌ Error analyzing client {client_obj.name}: {e}")
-        return "Error: AI analysis could not be completed."
+        logger.error(f"❌ Error during case analysis: {e}")
+        return "An error occurred while analyzing the case."
 
 
-# ================================
-# Analyze all clients (for scheduler)
-# ================================
-def analyze_all_client_cases(db, Client, CaseUpdate):
+def generate_client_notification(case_summary: str, client_name: str) -> str:
     """
-    Scheduler uses this to analyze all clients periodically.
+    Generate a concise SMS-style message for notifying the client about their case.
     """
-    from flask import current_app
-    with current_app.app_context():
-        clients = Client.query.all()
-        for c in clients:
-            summary = analyze_client_cases(c)
-            if summary:
-                new_update = CaseUpdate(client_id=c.id, summary=summary)
-                db.session.add(new_update)
-        db.session.commit()
-        logger.info("🧠 Scheduled AI case analysis completed for all clients.")
+    if not client:
+        logger.error("❌ OpenAI client not initialized — cannot generate message.")
+        return "Notification service unavailable."
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are an assistant for a law firm CRM that writes polite, "
+                        "concise text messages to clients about their cases."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Write a brief and professional update text message for "
+                        f"client {client_name} summarizing this case update:\n\n{case_summary}"
+                    ),
+                },
+            ],
+            temperature=0.7,
+        )
+
+        notification = response.choices[0].message.content.strip()
+        logger.info("✅ Successfully generated client notification.")
+        return notification
+
+    except Exception as e:
+        logger.error(f"❌ Error generating client notification: {e}")
+        return "An error occurred while generating the notification."
