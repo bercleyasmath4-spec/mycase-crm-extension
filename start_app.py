@@ -1,120 +1,111 @@
 import os
 import logging
-from datetime import datetime
 from flask import Flask, render_template
-from flask_migrate import Migrate
-from extensions import db, login_manager
-from dotenv import load_dotenv
-from werkzeug.security import generate_password_hash
+from flask_login import LoginManager
+from extensions import db
+from models import User
+from services.scheduler import init_scheduler
 
-# =======================
-# Load environment variables
-# =======================
-load_dotenv()
+# =========================
+#  Flask App Initialization
+# =========================
+app = Flask(__name__, instance_relative_config=True)
 
-# =======================
-# Configure logging
-# =======================
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Ensure instance folder exists
+os.makedirs(app.instance_path, exist_ok=True)
 
-# =======================
-# Flask app setup
-# =======================
-app = Flask(__name__)
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "supersecretkey")
+# =========================
+#  Configuration
+# =========================
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "fallback_secret_key")
 
-# Ensure database folder exists
-os.makedirs("instance", exist_ok=True)
-db_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "instance", "mycasecrm.db")
+# Database: Ensure absolute path for SQLite
+db_path = os.path.join(app.instance_path, "mycasecrm.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# Register current datetime as a Jinja global
-app.jinja_env.globals["now"] = datetime.now
-
-# Initialize extensions
+# Initialize database
 db.init_app(app)
-login_manager.init_app(app)
-migrate = Migrate(app, db)
 
-# =======================
-# Flask-Login Configuration
-# =======================
-from models import User
+# =========================
+#  Login Manager
+# =========================
+login_manager = LoginManager()
+login_manager.login_view = "auth.login"
+login_manager.init_app(app)
 
 @login_manager.user_loader
 def load_user(user_id):
-    """Load user by ID for Flask-Login."""
     return User.query.get(int(user_id))
 
-login_manager.login_view = "auth.login"
-login_manager.login_message_category = "info"
+# =========================
+#  Logging
+# =========================
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# =======================
-# Register Blueprints
-# =======================
+# =========================
+#  Blueprints
+# =========================
 try:
     from routes.auth import auth_bp
     from routes.dashboard import dash_bp
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(dash_bp)
+    from routes.api import api_bp
+
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(dash_bp, url_prefix="/dashboard")
+    app.register_blueprint(api_bp, url_prefix="/api")
+
     logger.info("✅ Blueprints registered successfully.")
 except Exception as e:
     logger.warning(f"⚠️ Route import issue: {e}")
 
-# =======================
-# AI Agent + Scheduler
-# =======================
+# =========================
+#  Scheduler
+# =========================
 try:
-    from services.scheduler import scheduler, check_all_clients
-    scheduler.start()
+    init_scheduler(app)
     logger.info("✅ Scheduler started successfully.")
 except Exception as e:
     logger.warning(f"⚠️ Scheduler not found. Skipping background tasks. ({e})")
 
-# =======================
-# Ensure default admin
-# =======================
-def ensure_admin_exists():
-    """Ensure a default admin user exists."""
-    with app.app_context():
-        admin_email = "admin@casepulseai.com"
-        admin_password = "admin123"
-        admin = User.query.filter_by(email=admin_email).first()
-        if not admin:
-            hashed_password = generate_password_hash(admin_password)
-            new_admin = User(email=admin_email, password_hash=hashed_password, role="admin")
-            db.session.add(new_admin)
-            db.session.commit()
-            print("👑 Default admin created — admin@casepulseai.com / admin123")
-        else:
-            print("✅ Admin user already exists.")
-
-# =======================
-# Routes
-# =======================
+# =========================
+#  Routes
+# =========================
 @app.route("/")
 def home():
-    """Home route — dashboard if logged in, index otherwise."""
-    from flask_login import current_user
-    if current_user.is_authenticated:
-        return render_template("dashboard.html")
-    return render_template("index.html")
+    return render_template("dashboard.html")
 
-@app.route("/about")
-def about():
-    """About page route."""
-    return render_template("about.html")
+@app.errorhandler(404)
+def not_found(e):
+    return render_template("404.html"), 404
 
-# =======================
-# Main App Launch
-# =======================
+# =========================
+#  Database + Admin User
+# =========================
+def ensure_admin_exists():
+    """Ensure the admin user exists in the database."""
+    admin_email = os.getenv("ADMIN_EMAIL", "admin@casepulseai.com")
+    admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
+
+    if not User.query.filter_by(email=admin_email).first():
+        admin = User(email=admin_email, role="admin")
+        admin.set_password(admin_password)
+        db.session.add(admin)
+        db.session.commit()
+        logger.info("✅ Admin user created successfully.")
+    else:
+        logger.info("✅ Admin user already exists.")
+
+with app.app_context():
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    db.create_all()
+    ensure_admin_exists()
+    logger.info("✅ Database initialized and checked for admin user.")
+
+# =========================
+#  Run App
+# =========================
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-        ensure_admin_exists()
-        logger.info("✅ Database initialized and checked for admin user.")
-    app.run(debug=True)
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
