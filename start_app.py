@@ -4,6 +4,10 @@ from flask import Flask, render_template, redirect, url_for
 from flask_login import LoginManager
 from models import db, User
 from services.scheduler import init_scheduler
+from routes.dashboard import dash_bp
+
+
+
 
 # =========================
 #  Flask App Initialization
@@ -54,6 +58,7 @@ try:
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(about_bp, url_prefix="/about")
     app.register_blueprint(api_bp, url_prefix="/api")
+    app.register_blueprint(dash_bp, url_prefix="/dashboard")
 
     logger.info("✅ Blueprints registered successfully.")
 except Exception as e:
@@ -86,6 +91,7 @@ def logout():
 @app.errorhandler(404)
 def not_found(e):
     return render_template("404.html"), 404
+
 
 # =========================
 #  Admin User Setup

@@ -4,27 +4,26 @@ from extensions import db
 from models import Client, CaseUpdate, Message
 from services.ai_agent import analyze_client_cases
 
-dash_bp = Blueprint("dash_bp", __name__, url_prefix="/dashboard")
+dash_bp = Blueprint("dash_bp", __name__)
 
 # ==========================
 # Dashboard Home
 # ==========================
+@dash_bp.route("/dashboard_home")
+def dashboard_home():
+    return redirect(url_for("dash_bp.dashboard"))
+
+# ==========================
+# Dashboard Main Page
+# ==========================
 @dash_bp.route("/")
-@login_required
 def dashboard():
+    return render_template("dashboard.html")
+
     clients = Client.query.all()
     case_updates = CaseUpdate.query.order_by(CaseUpdate.created_at.desc()).limit(5).all()
     messages = Message.query.order_by(Message.created_at.desc()).limit(5).all()
     return render_template("dashboard.html", clients=clients, case_updates=case_updates, messages=messages)
-
-
-# ==========================
-# Redirect /dashboard_home → /dashboard
-# ==========================
-@dash_bp.route("/home")
-def dashboard_home():
-    return redirect(url_for("dash_bp.dashboard"))
-
 
 # ==========================
 # Add a new client
@@ -47,7 +46,6 @@ def add_client():
     flash(f"✅ Client '{name}' added successfully!", "success")
     return redirect(url_for("dash_bp.dashboard"))
 
-
 # ==========================
 # Delete client
 # ==========================
@@ -60,7 +58,6 @@ def delete_client(client_id):
     flash("🗑️ Client deleted successfully.", "info")
     return redirect(url_for("dash_bp.dashboard"))
 
-
 # ==========================
 # View client details
 # ==========================
@@ -69,7 +66,6 @@ def delete_client(client_id):
 def client_details(client_id):
     client = Client.query.get_or_404(client_id)
     return render_template("client_details.html", client=client)
-
 
 # ==========================
 # AI Case Analysis
