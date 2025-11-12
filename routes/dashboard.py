@@ -4,12 +4,12 @@ from extensions import db
 from models import Client, CaseUpdate, Message
 from services.ai_agent import analyze_client_cases
 
-dash_bp = Blueprint("dash_bp", __name__)
+dash_bp = Blueprint("dash_bp", __name__, url_prefix="/dashboard")
 
 # ==========================
-# Dashboard route
+# Dashboard Home
 # ==========================
-@dash_bp.route("/dashboard")
+@dash_bp.route("/")
 @login_required
 def dashboard():
     clients = Client.query.all()
@@ -17,27 +17,41 @@ def dashboard():
     messages = Message.query.order_by(Message.created_at.desc()).limit(5).all()
     return render_template("dashboard.html", clients=clients, case_updates=case_updates, messages=messages)
 
+
 # ==========================
-# Add new client
+# Redirect /dashboard_home → /dashboard
 # ==========================
-@dash_bp.route("/dashboard/add_client", methods=["POST"])
+@dash_bp.route("/home")
+def dashboard_home():
+    return redirect(url_for("dash_bp.dashboard"))
+
+
+# ==========================
+# Add a new client
+# ==========================
+@dash_bp.route("/add_client", methods=["POST"])
 @login_required
 def add_client():
     name = request.form.get("name")
     phone = request.form.get("phone")
     email = request.form.get("email")
 
+    if not name or not email:
+        flash("❌ Missing client name or email.", "danger")
+        return redirect(url_for("dash_bp.dashboard"))
+
     new_client = Client(name=name, phone=phone, email=email)
     db.session.add(new_client)
     db.session.commit()
 
-    flash("✅ Client added successfully!", "success")
+    flash(f"✅ Client '{name}' added successfully!", "success")
     return redirect(url_for("dash_bp.dashboard"))
+
 
 # ==========================
 # Delete client
 # ==========================
-@dash_bp.route("/dashboard/delete_client/<int:client_id>", methods=["POST"])
+@dash_bp.route("/delete_client/<int:client_id>", methods=["POST"])
 @login_required
 def delete_client(client_id):
     client = Client.query.get_or_404(client_id)
@@ -46,19 +60,21 @@ def delete_client(client_id):
     flash("🗑️ Client deleted successfully.", "info")
     return redirect(url_for("dash_bp.dashboard"))
 
+
 # ==========================
-# Client details
+# View client details
 # ==========================
-@dash_bp.route("/dashboard/client/<int:client_id>")
+@dash_bp.route("/client/<int:client_id>")
 @login_required
 def client_details(client_id):
     client = Client.query.get_or_404(client_id)
     return render_template("client_details.html", client=client)
 
+
 # ==========================
 # AI Case Analysis
 # ==========================
-@dash_bp.route("/dashboard/analyze", methods=["POST"])
+@dash_bp.route("/analyze", methods=["POST"])
 @login_required
 def analyze_cases():
     clients = Client.query.all()

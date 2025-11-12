@@ -113,3 +113,28 @@ def check_all_clients():
 # Schedule Job Every 10 Minutes
 # =====================================================
 scheduler.add_job(func=check_all_clients, trigger="interval", minutes=10)
+# ======================================================
+# ✅ Scheduler Initialization Function
+# ======================================================
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+from datetime import timedelta
+from services.ai_agent import analyze_all_client_cases
+import logging
+
+logger = logging.getLogger(__name__)
+scheduler = BackgroundScheduler()
+
+def init_scheduler(app):
+    """Initialize the APScheduler with Flask app context."""
+    if not scheduler.running:
+        with app.app_context():
+            scheduler.add_job(
+                func=analyze_all_client_cases,
+                trigger=IntervalTrigger(minutes=15),  # runs every 15 minutes
+                id="check_all_clients",
+                name="Analyze and notify clients",
+                replace_existing=True,
+            )
+            scheduler.start()
+            logger.info("✅ Scheduler started successfully.")
