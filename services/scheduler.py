@@ -4,7 +4,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from flask import current_app
 from extensions import db
 from models import Client
-from services.ai_agent import analyze_all_client_cases
+from services.ai_agent import analyze_client_cases
+
 from ringcentral import SDK
 from msal import ConfidentialClientApplication
 import requests
@@ -96,7 +97,7 @@ def check_all_clients():
             if not clients:
                 return
 
-            analyze_all_client_cases(clients)
+            analyze_client_cases(clients)
 
             for client in clients:
                 ai_summary = f"New AI analysis update for {client.name}."
