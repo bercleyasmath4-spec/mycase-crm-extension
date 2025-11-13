@@ -1,24 +1,20 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from extensions import db
 from models import Client, CaseUpdate, Message
 from services.ai_agent import analyze_client_cases
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 
-dash_bp = Blueprint("dash_bp", __name__)
+dash_bp = Blueprint('dash_bp', __name__, url_prefix="/dashboard")
 
-# ==========================
-# Dashboard Home
-# ==========================
-@dash_bp.route("/dashboard_home")
-def dashboard_home():
-    return redirect(url_for("dash_bp.dashboard"))
-
-# ==========================
-# Dashboard Main Page
-# ==========================
-@dash_bp.route("/")
+@dash_bp.route('/')
 def dashboard():
     return render_template("dashboard.html")
+
+# optional redirect if other parts call dashboard_home
+@dash_bp.route('/dashboard_home')
+def dashboard_home():
+    return redirect(url_for('dash_bp.dashboard'))
+
 
     clients = Client.query.all()
     case_updates = CaseUpdate.query.order_by(CaseUpdate.created_at.desc()).limit(5).all()

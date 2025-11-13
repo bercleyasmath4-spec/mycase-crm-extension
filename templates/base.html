@@ -27,18 +27,18 @@
 </head>
 <body>
 
-  <nav class="navbar navbar-expand-lg navbar-dark px-3">
-<a class="navbar-brand fw-bold" href="{{ url_for('dash_bp.dashboard') }}">⚖️ CasePulse AI</a>
-    <div class="collapse navbar-collapse">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('dash_bp.dashboard') }}">Dashboard</a></li><a class="navbar-brand fw-bold" href="{{ url_for('home') }}">⚖️ CasePulse AI</a>
+<!-- templates/base.html -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="{{ url_for('dash_bp.dashboard') }}">⚖️ CasePulse AI</a>
 
-
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('about') }}">About</a></li>
-<a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
-      </ul>
-    </div>
-  </nav>
+    <ul class="navbar-nav ms-auto">
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('dash_bp.dashboard') }}">Dashboard</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('about.about') }}">About</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a></li>
+    </ul>
+  </div>
+</nav>
 
   <div class="container mt-4">
     {% with messages = get_flashed_messages(with_categories=true) %}
